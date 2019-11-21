@@ -1,4 +1,4 @@
-import logging, os, shelve, time, openpyxl
+import logging, os, time, openpyxl, datetime
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s %(message)s')
 logging.debug('start of program')
 #logging.disable(logging.DEBUG)
@@ -12,46 +12,72 @@ ws = wb.active
 #wb.save('example.xlsx')
 #TODO add running number when saving example.xlsx to avoid fucking up file.
 activeProject = 0
-
-
+runState = True
 activeProject = input('Hvilket prosjekt jobbes på: ')
 activeCell = ''
+weekDayInt = 0
+weekDayDict = {
+    "0":    "Mandag",
+    "1":    "Tirsdag",
+    "2":    "Onsdag",
+    "3":    "Torsdag",
+    "4":    "Fredag",
+    "5":    "Lørdag",
+    "6":    "Søndag"
+ }
+weekDay = ''
+
+def init():
+    global weekDayInt
+    global weekDayDict
+    global weekDay
+    weekDayInt = datetime.datetime.today().weekday()
+    weekDay = weekDayDict[str(weekDayInt)]
+
 #TODO search through timesheet to find correct column to write to, based on active project, todays date and if there data present.
 #TODO if data is present, add accumulated time this session to that cell, if not, make new cell. 
-def findCell(activeProject, date):
+
+def findCell(activeProject):
     for col in ws.iter_cols(min_row=0, max_col=1 ,max_row=10):
         logging.debug('active project: %s' % (activeProject))
+        i = 0
         for cell in col:
             logging.debug('cell is: %s' % (cell))   
-            logging.debug('cell value is: %s' % (cell.value))   
-            if cell.value == activeProject:
-
+            logging.debug('cell value is: %s' % (cell.value))
+            i +=1
+            if str(cell.value) == activeProject:
+                global activeCell
                 activeCell = cell
-                print (activeCell)
-            else:
-                logging.debug('no cell found')
-runState = True
-
+                logging.info('Active cell is %s ' % (activeCell))
+                break
+            elif i == 10 and activeCell=='':
+                logging.info('no project found, creating new row.')
+                #findCell(1264)
+                break
+            
 def timeCount(activeProject, timeFile):
     start = time.time()
     newActiveProject = ""
-    while newActiveProject == '':
-        newActiveProject = input('Tast inn nytt prosjekt: ')
-        if newActiveProject in timeDict.keys():
-            print("ja")
-        else:
-             print("nei")
-
-
+    userInput = ''
+    while userInput == '':
+        userInput = input('Tast inn nytt prosjekt nummer eller "stopp" for å avslutte: ')
     stop = time.time()
-    timeDict['timeToday'] = timeDict['timeToday'] + (stop - start)
-    print(timeDict['timeToday'])
+    activeProject = activeProject + (stop - start)
+    print(activeCell)
+    #except ValueError:
+       # print('something fucky')
+
+#def writeToExcel(activeProject, timeFile, date):
+
+
+init()
 
 while runState:
     if activeProject != '':
-        #timeCount(activeProject, timeLog)
-        findCell(activeProject,wb)
-        break
+        findCell(activeProject)
+        timeCount(activeProject, wb)  
+        #break
+
 
 #TODO skill mellom forskjellige timebærere
 
