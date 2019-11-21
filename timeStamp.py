@@ -37,23 +37,31 @@ def init():
 #TODO search through timesheet to find correct column to write to, based on active project, todays date and if there data present.
 #TODO if data is present, add accumulated time this session to that cell, if not, make new cell. 
 
-def findCell(activeProject):
+def findCell(activeProject, find='project'):
     for col in ws.iter_cols(min_row=0, max_col=1 ,max_row=10):
         logging.debug('active project: %s' % (activeProject))
         i = 0
-        for cell in col:
-            logging.debug('cell is: %s' % (cell))   
-            logging.debug('cell value is: %s' % (cell.value))
-            i +=1
-            if str(cell.value) == activeProject:
-                global activeCell
-                activeCell = cell
-                logging.info('Active cell is %s ' % (activeCell))
-                break
-            elif i == 10 and activeCell=='':
-                logging.info('no project found, creating new row.')
-                #findCell(1264)
-                break
+        if find == 'project':
+            for cell in col:
+                logging.debug('cell is: %s' % (cell))
+                logging.debug('cell value is: %s' % (cell.value))
+                i +=1
+                if str(cell.value) == activeProject:
+                    global activeCell
+                    activeCell = cell
+                    logging.info('Active cell is %s ' % (activeCell))
+                    break
+                elif i == 10 and activeCell=='':
+                    logging.info('no project found, creating new row.')
+                    findCell(activeProject, 'empty')
+                    break
+        else:
+            for cell in col:
+                if cell.value is None:
+                    ws.cell = activeProject
+                    logging.info('empty cell found %s' % (cell))
+                    wb.save('timeSheet.xlsx')
+                    break
             
 def timeCount(activeProject, timeFile):
     start = time.time()
